@@ -77,6 +77,7 @@ namespace Hananoki.SearchFilter {
 		static ReorderableList s_rl_searchFilterProject;
 
 		static bool s_changed;
+		static Vector2 s_scorll;
 
 		public static void Open() {
 			var window = GetWindow<SearchFilterSettingsWindow>();
@@ -188,7 +189,7 @@ namespace Hananoki.SearchFilter {
 
 
 
-			using( new PreferenceLayoutScope() ) {
+			using( new PreferenceLayoutScope( ref s_scorll ) ) {
 				EditorGUI.BeginChangeCheck();
 				E.i.toolbarSelect = GUILayout.Toolbar( E.i.toolbarSelect, toolbarNames );
 				if( EditorGUI.EndChangeCheck() ) {

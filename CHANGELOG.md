@@ -1,5 +1,11 @@
 # SearchFilter
 
+## [1.0.3] - 2020-07-16
+- SharedModule v1.5.0 is supported
+
+### Changed
+- Support for the new setting
+
 ## [1.0.2] - 2020-04-18
 - SharedModule v1.2.0 is supported
 

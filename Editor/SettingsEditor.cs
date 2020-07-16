@@ -6,6 +6,7 @@ using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
 using Hananoki.Extensions;
+using Hananoki.SharedModule;
 
 using E = Hananoki.SearchFilter.SettingsEditor;
 
@@ -49,10 +50,6 @@ namespace Hananoki.SearchFilter {
 
 		public bool Enable = true;
 
-
-
-
-
 		public static E i;
 
 		public static void Load() {
@@ -69,7 +66,7 @@ namespace Hananoki.SearchFilter {
 
 
 
-	public class SearchFilterSettingsWindow : HSettingsEditorWindow {
+	public class SettingsEditorWindow : HSettingsEditorWindow {
 
 		static string[] toolbarNames = { "Hierarchy", "Project" };
 
@@ -80,30 +77,21 @@ namespace Hananoki.SearchFilter {
 		static Vector2 s_scorll;
 
 		public static void Open() {
-			var window = GetWindow<SearchFilterSettingsWindow>();
-			window.SetTitle( new GUIContent( Package.name, Icon.Get( "SettingsIcon" ) ) );
-		}
-
-		void OnEnable() {
-			drawGUI = DrawGUI;
-			E.Load();
+			var w = GetWindow<SettingsEditorWindow>();
+			w.SetTitle( new GUIContent( Package.name, EditorIcon.settings ) );
+			w.headerMame = Package.name;
+			w.headerVersion = Package.version;
+			w.gui = DrawGUI;
 		}
 
 
 		static void DrawCommandTable( ReorderableList r ) {
-			using( new GUILayout.HorizontalScope() ) {
-				GUILayout.Space( 8 );
-				using( new GUILayout.VerticalScope() ) {
-					EditorGUI.BeginChangeCheck();
-					r.DoLayoutList();
-					if( EditorGUI.EndChangeCheck() ) {
-						s_changed = true;
-					}
-				}
-				GUILayout.Space( 8 );
+			EditorGUI.BeginChangeCheck();
+			r.DoLayoutList();
+			if( EditorGUI.EndChangeCheck() ) {
+				s_changed = true;
 			}
 		}
-
 
 		static ReorderableList MakeRLFromHierarchy() {
 			var r = new ReorderableList( E.i.searchFilterHierarchy, typeof( SettingsEditor.Hierarchy ) );
@@ -134,7 +122,7 @@ namespace Hananoki.SearchFilter {
 				rect.x = x + w * 0.20f;
 				rect.width = w * 0.80f;
 				p.filter = EditorGUI.TextField( rect, p.filter );
-				
+
 			};
 
 			return r;
@@ -169,10 +157,9 @@ namespace Hananoki.SearchFilter {
 		}
 
 
-		/// <summary>
-		/// 
-		/// </summary>
-		static void DrawGUI() {
+		public static void DrawGUI() {
+			E.Load();
+
 			if( E.i.searchFilterHierarchy == null ) {
 				E.i.searchFilterHierarchy = new List<E.Hierarchy>();
 			}
@@ -189,20 +176,19 @@ namespace Hananoki.SearchFilter {
 
 
 
-			using( new PreferenceLayoutScope( ref s_scorll ) ) {
-				EditorGUI.BeginChangeCheck();
-				E.i.toolbarSelect = GUILayout.Toolbar( E.i.toolbarSelect, toolbarNames );
-				if( EditorGUI.EndChangeCheck() ) {
-					s_changed = true;
-				}
-
-				if( E.i.toolbarSelect == 0 ) {
-					DrawCommandTable( s_rl_searchFilterHierarchy );
-				}
-				else {
-					DrawCommandTable( s_rl_searchFilterProject );
-				}
+			EditorGUI.BeginChangeCheck();
+			E.i.toolbarSelect = GUILayout.Toolbar( E.i.toolbarSelect, toolbarNames );
+			if( EditorGUI.EndChangeCheck() ) {
+				s_changed = true;
 			}
+
+			if( E.i.toolbarSelect == 0 ) {
+				DrawCommandTable( s_rl_searchFilterHierarchy );
+			}
+			else {
+				DrawCommandTable( s_rl_searchFilterProject );
+			}
+
 
 			if( s_changed ) {
 				E.Save();
@@ -212,9 +198,7 @@ namespace Hananoki.SearchFilter {
 		}
 
 
-
-
-
+#if !ENABLE_HANANOKI_SETTINGS
 #if UNITY_2018_3_OR_NEWER && !ENABLE_LEGACY_PREFERENCE
 		[SettingsProvider]
 		public static SettingsProvider PreferenceView() {
@@ -230,8 +214,25 @@ namespace Hananoki.SearchFilter {
 		[PreferenceItem( Package.name )]
 		public static void PreferencesGUI() {
 #endif
-			E.Load();
-			DrawGUI();
+			using( new LayoutScope() ) DrawGUI();
+		}
+#endif
+	}
+
+
+
+#if ENABLE_HANANOKI_SETTINGS
+	[SettingsClass]
+	public class SettingsEvent {
+		[SettingsMethod]
+		public static SettingsItem RegisterSettings() {
+			return new SettingsItem() {
+				//mode = 1,
+				displayName = Package.name,
+				version = Package.version,
+				gui = SettingsEditorWindow.DrawGUI,
+			};
 		}
 	}
+#endif
 }
